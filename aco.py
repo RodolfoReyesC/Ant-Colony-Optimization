@@ -46,38 +46,40 @@ class ACO:
         self.final_point = final_point
         self.n_ants = n_ants
         self.n_iterations = n_iterations
-        self.learning_rate = 0.95
+        self.learning_rate = 0.8
         self.alpha = np.random.uniform(0,1)
         self.beta = np.random.uniform(0,1)
         self.table = {}
         self.best_path = None
         self.best_length = np.inf
         self.size = size
+        # self.best_results = [{'Path': None, 'length': np.inf} for _ in range(self.n_iterations)]
 
-        x_i, x_f = 0, self.size + 1
-        x = list(np.linspace(x_i, x_f, self.size + 2, dtype=int))
-        y = x.copy()
+        x_i, x_f = 0, self.size[0] + 0.01
+        y_i, y_f = 0, self.size[1] + 0.01
+        x = list(np.arange(x_i, x_f, 0.5))  # Cambié np.linspace por np.arange para 0.5
+        y = list(np.arange(y_i, y_f, 0.5))  # Lo mismo para el eje y
         self.X, self.Y = np.meshgrid(x, y)
     
-    # Euclidean distance function between two points.
+    # Función de distancia euclidiana entre dos puntos.
     def euclidean_distance(self, point_1, point_2):
         x_1, y_1 = point_1
         x_2, y_2 = point_2
         d = (x_2 - x_1) ** 2 + (y_2 - y_1) ** 2
         return np.sqrt(d)
     
-    # This function provide the possibles nodes in a ratio of 1.4142 = sqrt(2)
+    # Esta función proporciona los nodos posibles en una relación de distancia mínima
     def possible_options_nodes(self, node):
-        min_distance = np.sqrt(2)
+        min_distance = 0.707  # Ajusté la distancia mínima a 0.707 (aproximadamente sqrt(2) * 0.5)
         options = []
-        for i in range(self.size + 1):
-            for j in range(self.size + 1):
+        for i in range(self.X.shape[0]):  # Cambié self.size[0] a self.X.shape[0] para asegurarme de iterar sobre la malla
+            for j in range(self.Y.shape[1]):  # Igual para el eje Y
                 possible_new_node = [self.X[i, j], self.Y[i, j]]
                 distance = self.euclidean_distance(node, possible_new_node)
-                if 0 < distance <= min_distance:
+                if 0 < distance <= min_distance:  # Comprobamos que la distancia sea mayor que 0 y menor o igual a min_distance
                     options.append(possible_new_node)
-        return options
-    
+        return options    
+
     # Choose new node function provide a new node based in the probability equation.
     def choose_new_node(self, node, nodes_options, pheromones, alpha, beta):
         probabilities = []
@@ -118,7 +120,7 @@ class ACO:
 
     def run_ACO(self):
         # Max step allowed for a better time response, this parameter you can modify.
-        max_step = 50
+        max_step = 250
         self.initialize_ants()
         
         for it in range(self.n_iterations):
@@ -134,7 +136,7 @@ class ACO:
                     # Get the value of the pheromones
                     pheromones = self.get_pheromones(options, actual_node)
                     # Choose a new node using the possible optines and values
-                    new_node = self.choose_new_node(actual_node, options, pheromones, self.beta, self.alpha)
+                    new_node = self.choose_new_node(actual_node, options, pheromones, self.alpha, self.beta)
                     distance = self.euclidean_distance(actual_node, new_node)
                     ant.move_to(new_node, distance)
                     actual_node = new_node
@@ -147,27 +149,27 @@ class ACO:
                 if ant.get_cost() < self.best_length:
                     self.best_length = ant.get_cost()
                     self.best_path = ant.get_path()
-
+                
             # Actualization of the values.
             self.actualization(self.table, self.ants)
         return self.ants
     
-    def draw_ACO2D(self):
+    def draw_ACO2D(self, best_path, best_length):
         aux = [self.initial_point, self.final_point]
         import matplotlib.pyplot as plt
 
-        x = [p[0] for p in self.best_path]
-        y = [p[1] for p in self.best_path]
+        x = [p[0] for p in best_path]
+        y = [p[1] for p in best_path]
 
-        plt.figure('ACO', figsize=(6, 6))
-        plt.plot(x, y, marker='o', linestyle='-', color='b')
+        plt.figure(figsize=(6, 6))
+        plt.plot(x, y, marker='o', linestyle='-', color='b', linewidth=10)
         for i, point in enumerate(aux):
             plt.text(point[0], point[1], f'{point}', fontsize=8, ha='right')
 
-        plt.xlim(- 1, self.size + 1)
-        plt.ylim(- 1, self.size + 1)
+        plt.xlim(- 1, self.size[0] + 1)
+        plt.ylim(- 1, self.size[1] + 1)
         plt.grid(True)
         plt.xlabel('X')
         plt.ylabel('Y')
-        plt.title('Metaheuristic path lenght ' + str(round(self.best_length,2)))
+        plt.title('Path lenght ' + str(round(best_length,2)))
         plt.show()
