@@ -70,7 +70,7 @@ class ACO:
     
     # Esta función proporciona los nodos posibles en una relación de distancia mínima
     def possible_options_nodes(self, node):
-        min_distance = 0.707  # Ajusté la distancia mínima a 0.707 (aproximadamente sqrt(2) * 0.5)
+        min_distance = 0.8  # Ajusté la distancia mínima a 0.707 (aproximadamente sqrt(2) * 0.5)
         options = []
         for i in range(self.X.shape[0]):  # Cambié self.size[0] a self.X.shape[0] para asegurarme de iterar sobre la malla
             for j in range(self.Y.shape[1]):  # Igual para el eje Y
@@ -122,6 +122,7 @@ class ACO:
         # Max step allowed for a better time response, this parameter you can modify.
         max_step = 250
         self.initialize_ants()
+        previous_node = []
         
         for it in range(self.n_iterations):
             for h, ant in enumerate(self.ants):
@@ -133,6 +134,11 @@ class ACO:
                 while True:
                     # Search possible options nodes
                     options = self.possible_options_nodes(actual_node)
+                    if(step > 1):
+                        for option in options:
+                            if(option == previous_node):
+                                options.remove(option)
+
                     # Get the value of the pheromones
                     pheromones = self.get_pheromones(options, actual_node)
                     # Choose a new node using the possible optines and values
